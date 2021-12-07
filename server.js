@@ -9,11 +9,7 @@ const mongoose = require('mongoose');
 const port = 5001;
 
 /***********************ROUTERS***************************/                        
-<<<<<<< HEAD
-app.use('/api/workers', require('./routes/user.route'));
-=======
 app.use('api/workers', require('./routes/user.route'));
->>>>>>> b71d3b7 (update)
 app.use('api/shifts', require('./routes/shift.route'));
 
 // mongoose.connect(`mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@cluster0.whijz.mongodb.net/workAppDb?retryWrites=true&w=majority`, { useNewUrlParser: true });
