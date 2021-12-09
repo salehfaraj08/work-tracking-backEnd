@@ -37,13 +37,15 @@ const login = async (req, res) => {
     const data = await workerModel.find({});
     const worker = data.find(worker => worker.passportId === passportId);
     console.log(worker);
-    if (worker === null) {
+    if (!worker) {
+        console.log('no worker');
         return res.status(400).json({ error: 'Worker does not exist' });
     }
     else {
         try {
             if (await bcrypt.compare(password, worker.password)) {
-                const accessToken = jwt.sign({ id: worker._id }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '60s' });
+                const accessToken = jwt.sign({ id: worker._id }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1000s' });
+                console.log(accessToken);
                 worker.token = accessToken;
                 worker.save((err, data) => {
                     if (err) return res.status(404).send(err);
@@ -56,7 +58,7 @@ const login = async (req, res) => {
         }
         catch (err) {
             console.log('errrr', err);
-            return res.status(400).json({ error: err });
+            return res.status(400).json({ error: 'no authentication' });
         }
     }
 }
