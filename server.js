@@ -15,5 +15,5 @@ app.use('/api/shifts', require('./routes/shift.route'));
 mongoose.connect(`mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@cluster0.whijz.mongodb.net/workAppDb?retryWrites=true&w=majority`, { useNewUrlParser: true });
 
 app.listen(process.env.PORT || port, () => {
-    console.log(`Server started on: ${process.env.PORT || port}`);
+    console.log(`Server started on : ${process.env.PORT || port}`);
 });
