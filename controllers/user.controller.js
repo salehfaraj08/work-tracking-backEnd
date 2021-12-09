@@ -4,8 +4,8 @@ require('dotenv').config();
 const workerModel = require('../models/user.model').user;
 
 const addNewUser = async (req, res) => {
-    const { passportId, firstName, lastName, password, role } = req.body;
-    console.log(passportId, firstName, lastName, password, role);
+    const { passportId, firstName, lastName, password } = req.body, role = 'user';
+    console.log(passportId, firstName, lastName, password);
     if (firstName.length < 3 || lastName.length < 3) {
         return res.status(400).json({ error: 'Invalid input' })
     }
