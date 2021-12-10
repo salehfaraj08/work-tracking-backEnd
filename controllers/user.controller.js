@@ -45,7 +45,7 @@ const login = async (req, res) => {
         try {
             if (await bcrypt.compare(password, worker.password)) {
                 const accessToken = jwt.sign({ id: worker._id }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1000s' });
-                console.log(accessToken);
+                console.log("accessToken",accessToken);
                 worker.token = accessToken;
                 worker.save((err, data) => {
                     if (err) return res.status(404).send(err);
@@ -83,12 +83,28 @@ const addNewShift = async (req, res) => {
         if (err) return res.status(404).send(err);
         return res.status(200).send(data);
     });
+}
 
+
+const getToken = async (req, res) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    if (token == null) return res.status(403).send({ result: 'error' });
+    const data = await workerModel.find({});
+    const worker = data.find(worker => worker.token === token);
+    console.log("worker",worker);
+    if (!worker) {
+        return res.status(403).send({ msg: 'User not authentecated' });
+    }
+    else{
+        return res.status(200).send({ msg: 'Use authentecated' });
+    }
 }
 
 module.exports = {
     addNewUser,
     login,
     logout,
-    addNewShift
+    addNewShift,
+    getToken
 }
