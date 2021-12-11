@@ -42,7 +42,7 @@ function isInt(n) {
 /*** controller fucnctions ***/
 
 const startNewShift = async (req, res) => {
-    const id = req.body;
+    const {id} = req.body;
     console.log("id from new shift");
     // console.log(new Date());
     // const hours = new Date().getHours();
