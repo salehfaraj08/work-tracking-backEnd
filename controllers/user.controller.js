@@ -101,23 +101,30 @@ const getShifts = async (req, res) => {
     console.log(id);
     const month = new Date().getMonth() + 1;
     workerModel.findById(id).populate('shifts', 'startDate enteryHour exitHour shiftDuration').exec((err, data) => {
+        console.log("gettttshiftssssss");
         if (err) return res.status(400).json({ msg: err });
         if (!data) return res.status(400).json({ msg: 'worker does not exist!' });
-        console.log(data);
+        console.log("data get shifts:",data);
         const newShifts = [];
-        data.shifts.map(shift => {
-            if (month === shift.startDate.getMonth() + 1) {
-                newShifts.push({
-                    _id: shift.id,
-                    enteryHour: shift.enteryHour,
-                    exitHour: shift.exitHour,
-                    shiftDuration: shift.shiftDuration,
-                    month: shift.startDate.getMonth() + 1,
-                    year: shift.startDate.getFullYear(),
-                    day: shift.startDate.getDate()
-                })
-            }
-        })
+        if (data.shifts.length > 0) {
+            data.shifts.map(shift => {
+                if (month === shift.startDate.getMonth() + 1) {
+                    newShifts.push({
+                        _id: shift.id,
+                        enteryHour: shift.enteryHour,
+                        exitHour: shift.exitHour,
+                        shiftDuration: shift.shiftDuration,
+                        month: shift.startDate.getMonth() + 1,
+                        year: shift.startDate.getFullYear(),
+                        day: shift.startDate.getDate()
+                    })
+                }
+            })
+        }
+        else{
+            console.log("nooooooo");
+            return res.status(400).json({ msg: 'no shifts yet!' });
+        }
         console.log(newShifts);
         return res.status(200).json(newShifts);
     });
