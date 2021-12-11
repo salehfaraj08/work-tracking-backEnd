@@ -7,7 +7,7 @@ router.post('/startShift', authenticateToken, (req, res) => {
     shiftController.startNewShift(req, res);
 });
 
-router.put('/endShift', (req, res) => {
+router.put('/endShift', authenticateToken, (req, res) => {
     shiftController.endShift(req, res);
 });
 

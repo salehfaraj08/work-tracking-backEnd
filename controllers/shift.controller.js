@@ -18,6 +18,29 @@ const calculateShowHour = (hours, minutes) => {
     return hours + ':' + minutes;
 }
 
+const calculateDurationShift = (now, date) => {
+    let diffInMilliSeconds = Math.abs(now - date) / 1000;
+    const days = Math.floor(diffInMilliSeconds / 86400);
+    diffInMilliSeconds -= days * 86400;
+
+    // calculate hours
+    const hours = Math.floor(diffInMilliSeconds / 3600) % 24;
+    diffInMilliSeconds -= hours * 3600;
+    console.log('calculated hours', hours);
+
+    // calculate minutes
+    const minutes = Math.floor(diffInMilliSeconds / 60) % 60;
+    diffInMilliSeconds -= minutes * 60;
+    console.log('minutes', minutes);
+    return { hours, minutes };
+}
+
+function isInt(n) {
+    return n % 1 === 0;
+}
+
+/*** controller fucnctions ***/
+
 const startNewShift = async (req, res) => {
     console.log(new Date());
     const hours = new Date().getHours();
@@ -43,26 +66,7 @@ const startNewShift = async (req, res) => {
 
 }
 
-const calculateDurationShift = (now, date) => {
-    let diffInMilliSeconds = Math.abs(now - date) / 1000;
-    const days = Math.floor(diffInMilliSeconds / 86400);
-    diffInMilliSeconds -= days * 86400;
 
-    // calculate hours
-    const hours = Math.floor(diffInMilliSeconds / 3600) % 24;
-    diffInMilliSeconds -= hours * 3600;
-    console.log('calculated hours', hours);
-
-    // calculate minutes
-    const minutes = Math.floor(diffInMilliSeconds / 60) % 60;
-    diffInMilliSeconds -= minutes * 60;
-    console.log('minutes', minutes);
-    return { hours, minutes };
-}
-
-function isInt(n) {
-    return n % 1 === 0;
-}
 const endShift = async (req, res) => {
     let { _id, salaryPerHourPass } = req.body;
     if (_id) {
@@ -98,13 +102,13 @@ const endShift = async (req, res) => {
             dayLength = 2;
         }
         if (minutesAndHours.hours > 0 && minutesAndHours.minutes > 0) {
-            shiftDuration = `your shift duration is ${minutesAndHours.hours} hours and ${minutesAndHours.minutes} minutes`;
+            shiftDuration = `shift duration is ${minutesAndHours.hours} hours and ${minutesAndHours.minutes} minutes`;
         }
         if (minutesAndHours.hours > 0 && minutesAndHours.minutes === 0) {
-            shiftDuration = `your shift duration is ${minutesAndHours.hours} hours`;
+            shiftDuration = `shift duration is ${minutesAndHours.hours} hours`;
         }
         if (minutesAndHours.hours === 0 && minutesAndHours.minutes > 0) {
-            shiftDuration = `your shift duration is ${minutesAndHours.minutes} minutes`;
+            shiftDuration = `shift duration is ${minutesAndHours.minutes} minutes`;
         }
         console.log("shift.salaryPerHour", shift.salaryPerHour);
         if (shift.salaryPerHour === 0) {

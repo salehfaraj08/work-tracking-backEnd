@@ -5,7 +5,7 @@ async function authenticateToken(req, res, next) {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
     console.log("token auth: ",token);
-    if (token == null) return res.status(403).send({ result: 'error' });
+    if (token == null) return res.status(403).send({ msg: 'User not authentecated' });
     const data = await workerModel.find({});
     const worker = data.find(worker => worker.token === token);
     console.log("worker auth",worker);
@@ -18,7 +18,7 @@ async function authenticateToken(req, res, next) {
             worker.save((err, _) => {
                 if (err) return res.status(403).send(err);
             });
-            return res.status(403).send({ result: 'error', msg: 'Expired token' });
+            return res.status(403).send({ result: 'error', msg: 'User not authentecated' });
         }
         req.user = worker;
         next();

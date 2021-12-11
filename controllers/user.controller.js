@@ -5,15 +5,13 @@ const workerModel = require('../models/user.model').user;
 
 const addNewUser = async (req, res) => {
     const { passportId, firstName, lastName, password } = req.body, role = 'user';
-    console.log(passportId, firstName, lastName, password);
     if (firstName.length < 3 || lastName.length < 3) {
-        return res.status(400).json({ error: 'Invalid input' })
+        return res.status(400).json({ msg: 'Invalid input' })
     }
     const data = await workerModel.find({});
     const worker = data.find(worker => worker.passportId === passportId);
-    console.log(worker);
     if (worker) {
-        return res.status(400).json({ error: 'Worker is already exist' });
+        return res.status(400).json({ msg: 'Worker is already exist' });
     }
     const salt = await bcrypt.genSalt();
     const hashedPassword = await bcrypt.hash(password, salt);
@@ -25,18 +23,15 @@ const addNewUser = async (req, res) => {
         role
     });
     user.save((err, data) => {
-        if (err) return res.status(404).send(err.errors.passportId.message);
+        if (err) return res.status(404).send({ msg: err.errors.passportId.message });
         return res.status(200).send(data);
     });
 }
 
 const login = async (req, res) => {
     const { passportId, password } = req.body;
-    console.log(passportId, password);
-
     const data = await workerModel.find({});
     const worker = data.find(worker => worker.passportId === passportId);
-    console.log(worker);
     if (!worker) {
         console.log('no worker');
         return res.status(400).json({ error: 'Worker does not exist' });
@@ -44,8 +39,8 @@ const login = async (req, res) => {
     else {
         try {
             if (await bcrypt.compare(password, worker.password)) {
-                const accessToken = jwt.sign({ id: worker._id }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1000s' });
-                console.log("accessToken",accessToken);
+                const accessToken = jwt.sign({ id: worker._id }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '3h' });
+                console.log("accessToken", accessToken);
                 worker.token = accessToken;
                 worker.save((err, data) => {
                     if (err) return res.status(404).send(err);
@@ -92,19 +87,48 @@ const getToken = async (req, res) => {
     if (token == null) return res.status(403).send({ result: 'error' });
     const data = await workerModel.find({});
     const worker = data.find(worker => worker.token === token);
-    console.log("worker",worker);
     if (!worker) {
         return res.status(403).send({ msg: 'User not authentecated' });
     }
-    else{
+    else {
         return res.status(200).send({ msg: 'Use authentecated' });
     }
 }
+
+const getShifts = async (req, res) => {
+    console.log(req.params);
+    const id = req.params.id;
+    console.log(id);
+    const month = new Date().getMonth() + 1;
+    workerModel.findById(id).populate('shifts', 'startDate enteryHour exitHour shiftDuration').exec((err, data) => {
+        if (err) return res.status(400).json({ msg: err });
+        if (!data) return res.status(400).json({ msg: 'worker does not exist!' });
+        console.log(data);
+        const newShifts = [];
+        data.shifts.map(shift => {
+            if (month === shift.startDate.getMonth() + 1) {
+                newShifts.push({
+                    _id: shift.id,
+                    enteryHour: shift.enteryHour,
+                    exitHour: shift.exitHour,
+                    shiftDuration: shift.shiftDuration,
+                    month: shift.startDate.getMonth() + 1,
+                    year: shift.startDate.getFullYear(),
+                    day: shift.startDate.getDate()
+                })
+            }
+        })
+        console.log(newShifts);
+        return res.status(200).json(newShifts);
+    });
+}
+
 
 module.exports = {
     addNewUser,
     login,
     logout,
     addNewShift,
-    getToken
+    getToken,
+    getShifts,
 }
