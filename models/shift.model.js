@@ -20,13 +20,6 @@ const shiftSchema = new mongoose.Schema({
     exitHour: {
         type: String
     },
-    salaryPerHour: {
-        type: Number,
-        default: 0
-    },
-    salaryPerShift: {
-        type: Number
-    },
     shiftDuration: {
         type: String
     }

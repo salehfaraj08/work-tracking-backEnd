@@ -1,5 +1,5 @@
 const shiftModel = require('../models/shift.model').shift;
-
+const workerModel = require('../models/user.model').user;
 const calculateShowHour = (hours, minutes) => {
     if (hours < 10 && hours >= 0) {
         hours = '0' + hours;
@@ -42,27 +42,29 @@ function isInt(n) {
 /*** controller fucnctions ***/
 
 const startNewShift = async (req, res) => {
-    console.log(new Date());
-    const hours = new Date().getHours();
-    console.log('the hours is:', hours);
-    const minutes = new Date().getMinutes();
-    console.log('the minutes is:', minutes);
-    const day = new Date().getDay() + 1;
-    console.log('the day is:', day);
-    if (day === 7) {
-        return res.status(400).json({ error: 'today is a day off' });
-    }
-    else {
-        const enteryHour = calculateShowHour(hours, minutes)
-        const shift = new shiftModel({
-            enteryHour
-        });
-        console.log("shifttttt:", shift.enteryHour);
-        shift.save((err, data) => {
-            if (err) return res.status(404).send(err);
-            return res.status(200).send(data);
-        });
-    }
+    const id = req.body;
+    console.log("id from new shift");
+    // console.log(new Date());
+    // const hours = new Date().getHours();
+    // console.log('the hours is:', hours);
+    // const minutes = new Date().getMinutes();
+    // console.log('the minutes is:', minutes);
+    // const day = new Date().getDay() + 1;
+    // console.log('the day is:', day);
+    // if (day === 7) {
+    //     return res.status(400).json({ error: 'today is a day off' });
+    // }
+    // else {
+    //     const enteryHour = calculateShowHour(hours, minutes)
+    //     const shift = new shiftModel({
+    //         enteryHour
+    //     });
+    //     console.log("shifttttt:", shift.enteryHour);
+    //     shift.save((err, data) => {
+    //         if (err) return res.status(404).send(err);
+    //         return res.status(200).send(data);
+    //     });
+    // }
 
 }
 
