@@ -39,7 +39,7 @@ const login = async (req, res) => {
     else {
         try {
             if (await bcrypt.compare(password, worker.password)) {
-                const accessToken = jwt.sign({ id: worker._id }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '365d' });
+                const accessToken = jwt.sign({ id: worker._id }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '4h' });
                 console.log("accessToken", accessToken);
                 worker.token = accessToken;
                 worker.save((err, data) => {
