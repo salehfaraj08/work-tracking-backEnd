@@ -39,41 +39,70 @@ function isInt(n) {
     return n % 1 === 0;
 }
 
+const createShift = (res, day, hours, minutes, id) => {
+    if (day === 7) {
+        return res.status(400).json({ msg: 'today is a day off' });
+    }
+    else {
+        const enteryHour = calculateShowHour(hours, minutes)
+        const shift = new shiftModel({
+            startDate: new Date(),
+            enteryHour
+        });
+        console.log("shifttttt:", shift.enteryHour);
+        shift.save((err, shiftData) => {
+            if (err) return res.status(404).send(err);
+            workerModel.findByIdAndUpdate(id, { shifts: shiftData._id }, { new: true }, (err, _) => {
+                if (err) return res.status(404).send(err);
+                return res.status(200).send(shiftData);
+            });
+        });
+    }
+}
+
 /*** controller fucnctions ***/
 
 const startNewShift = async (req, res) => {
-    const {id} = req.body;
-    console.log("id from new shift");
-    // console.log(new Date());
-    // const hours = new Date().getHours();
-    // console.log('the hours is:', hours);
-    // const minutes = new Date().getMinutes();
-    // console.log('the minutes is:', minutes);
-    // const day = new Date().getDay() + 1;
-    // console.log('the day is:', day);
-    // if (day === 7) {
-    //     return res.status(400).json({ error: 'today is a day off' });
-    // }
-    // else {
-    //     const enteryHour = calculateShowHour(hours, minutes)
-    //     const shift = new shiftModel({
-    //         enteryHour
-    //     });
-    //     console.log("shifttttt:", shift.enteryHour);
-    //     shift.save((err, data) => {
-    //         if (err) return res.status(404).send(err);
-    //         return res.status(200).send(data);
-    //     });
-    // }
+    const { id } = req.body;
+    console.log("id from new shift:", id);
+    const worker = await workerModel.findById(id).populate('shifts', 'startDate endDate').exec();
+    console.log("worker from new shift:", worker);
+    const shifts = worker.shifts;
+    const day = new Date().getDate();
+    const month = new Date().getMonth() + 1;
+    const year = new Date().getFullYear();
+    const hours = new Date().getHours();
+    console.log('the hours is:', hours);
+    const minutes = new Date().getMinutes();
+    console.log('the minutes is:', minutes);
+    if (shifts.length > 0) {
+        const findShift = shifts.find(shift => {
+            if (shift.startDate.getDate() === day && shift.startDate.getMonth() + 1 === month && shift.startDate.getFullYear() === year && shift.endDate) {
+                return true;
+            }
+            return false;
+        });
+        if (findShift) {
+            return res.status(400).json({ msg: 'you have started your shift already today' });
+        }
+        else {
+            createShift(res, day, hours, minutes, id);
+        }
 
+    }
+    else {
+        createShift(res, day, hours, minutes, id);
+    }
 }
 
 
 const endShift = async (req, res) => {
-    let { _id, salaryPerHourPass } = req.body;
-    if (_id) {
-        console.log(_id);
-        const shift = await shiftModel.findOne({ _id: _id });
+    let { id } = req.body;
+    console.log(id);
+
+    if (id) {
+        console.log(id);
+        const shift = await shiftModel.findOne({ _id: id });
         if (!shift) {
             return res.status(400).json({ error: 'these shift is not exist' });
         }
@@ -81,7 +110,7 @@ const endShift = async (req, res) => {
     else {
         return res.status(400).json({ error: 'you havent start the shift today please contact the admin to update the hours' });
     }
-    const shift = await shiftModel.findOne({ _id: _id });
+    const shift = await shiftModel.findOne({ _id: id });
     console.log(shift.startDate, new Date());
     const endDate = new Date();
     const minutesAndHours = calculateDurationShift(endDate, shift.startDate);
@@ -96,7 +125,7 @@ const endShift = async (req, res) => {
         return res.status(400).json({ error: 'today is a day off' });
     }
     else {
-        let salaryPerShift = 0, shiftDuration = '', dayLength;
+        let dayLength;
         const exitHour = calculateShowHour(hours, minutes);
         if (minutesAndHours.hours >= 0 && minutesAndHours.hours < 9 && minutesAndHours.minutes > 0) {
             dayLength = 1;
@@ -104,90 +133,18 @@ const endShift = async (req, res) => {
             dayLength = 2;
         }
         if (minutesAndHours.hours > 0 && minutesAndHours.minutes > 0) {
-            shiftDuration = `shift duration is ${minutesAndHours.hours} hours and ${minutesAndHours.minutes} minutes`;
+            shiftDuration = `${minutesAndHours.hours} hours and ${minutesAndHours.minutes} minutes`;
         }
         if (minutesAndHours.hours > 0 && minutesAndHours.minutes === 0) {
-            shiftDuration = `shift duration is ${minutesAndHours.hours} hours`;
+            shiftDuration = `${minutesAndHours.hours} hours`;
         }
         if (minutesAndHours.hours === 0 && minutesAndHours.minutes > 0) {
-            shiftDuration = `shift duration is ${minutesAndHours.minutes} minutes`;
+            shiftDuration = `${minutesAndHours.minutes} minutes`;
         }
-        console.log("shift.salaryPerHour", shift.salaryPerHour);
-        if (shift.salaryPerHour === 0) {
-            if (dayLength === 2) {
-                const additionHours = minutesAndHours.hours - 9;
-                if (minutesAndHours.hours > 0) {
-                    salaryPerShift += 9 * salaryPerHourPass;
-                    salaryPerHourPass = salaryPerHourPass * (150 / 100);
-                    salaryPerShift += additionHours * salaryPerHourPass;
-                    if (!isInt(salaryPerShift))
-                        salaryPerShift = salaryPerShift.toFixed(2)
-                }
-                if (minutesAndHours.minutes > 0) {
-                    salaryPerShift += (minutesAndHours.minutes / 60) * salaryPerHourPass;
-                    if (!isInt(salaryPerShift))
-                        salaryPerShift = salaryPerShift.toFixed(2)
-                }
-                shiftModel.findByIdAndUpdate(_id, { endDate, dayLength, exitHour, salaryPerHour: salaryPerHourPass, salaryPerShift, shiftDuration }, { new: true }, (err, data) => {
-                    if (err) return res.status(404).send(err);
-                    return res.status(200).send(data);
-                });
-            }
-            else {
-                if (minutesAndHours.hours > 0) {
-                    salaryPerShift += minutesAndHours.hours * salaryPerHourPass;
-                    if (!isInt(salaryPerShift))
-                        salaryPerShift = salaryPerShift.toFixed(2)
-                }
-                if (minutesAndHours.minutes > 0) {
-                    salaryPerShift += (minutesAndHours.minutes / 60) * salaryPerHourPass;
-                    if (!isInt(salaryPerShift))
-                        salaryPerShift = salaryPerShift.toFixed(2)
-                }
-                shiftModel.findByIdAndUpdate(_id, { endDate, dayLength, exitHour, salaryPerHour: salaryPerHourPass, salaryPerShift, shiftDuration }, { new: true }, (err, data) => {
-                    if (err) return res.status(404).send(err);
-                    return res.status(200).send(data);
-                });
-            }
-        }
-        else {
-            let newSalaryPerHour = shift.salaryPerHour;
-            if (dayLength === 2) {
-                const additionHours = minutesAndHours.hours - 9;
-                if (minutesAndHours.hours > 0) {
-                    salaryPerShift += 9 * newSalaryPerHour;
-                    newSalaryPerHour = newSalaryPerHour * (150 / 100);
-                    salaryPerShift += additionHours * newSalaryPerHour;
-                    if (!isInt(salaryPerShift))
-                        salaryPerShift = salaryPerShift.toFixed(2)
-                }
-                if (minutesAndHours.minutes > 0) {
-                    salaryPerShift += (minutesAndHours.minutes / 60) * newSalaryPerHour;
-                    if (!isInt(salaryPerShift))
-                        salaryPerShift = salaryPerShift.toFixed(2)
-                }
-                shiftModel.findByIdAndUpdate(_id, { endDate, dayLength, exitHour, salaryPerShift, shiftDuration }, { new: true }, (err, data) => {
-                    if (err) return res.status(404).send(err);
-                    return res.status(200).send(data);
-                });
-            }
-            else {
-                if (minutesAndHours.hours > 0) {
-                    salaryPerShift += minutesAndHours.hours * newSalaryPerHour;
-                    if (!isInt(salaryPerShift))
-                        salaryPerShift = salaryPerShift.toFixed(2)
-                }
-                if (minutesAndHours.minutes > 0) {
-                    salaryPerShift += (minutesAndHours.minutes / 60) * newSalaryPerHour;
-                    if (!isInt(salaryPerShift))
-                        salaryPerShift = salaryPerShift.toFixed(2)
-                }
-                shiftModel.findByIdAndUpdate(_id, { endDate, dayLength, exitHour, salaryPerShift, shiftDuration }, { new: true }, (err, data) => {
-                    if (err) return res.status(404).send(err);
-                    return res.status(200).send(data);
-                });
-            }
-        }
+        shiftModel.findByIdAndUpdate(id, { endDate, dayLength, exitHour, shiftDuration }, { new: true }, (err, data) => {
+            if (err) return res.status(404).send(err);
+            return res.status(200).send(data);
+        });
     }
 }
 

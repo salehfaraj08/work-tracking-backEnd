@@ -39,7 +39,7 @@ const login = async (req, res) => {
     else {
         try {
             if (await bcrypt.compare(password, worker.password)) {
-                const accessToken = jwt.sign({ id: worker._id }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '3h' });
+                const accessToken = jwt.sign({ id: worker._id }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '24h' });
                 console.log("accessToken", accessToken);
                 worker.token = accessToken;
                 worker.save((err, data) => {
@@ -71,16 +71,6 @@ const logout = async (req, res) => {
 
 }
 
-const addNewShift = async (req, res) => {
-    const { workerId, shiftId } = req.body;
-    console.log(workerId, shiftId);
-    workerModel.findByIdAndUpdate(workerId, { shifts: shiftId }, { new: true }, (err, data) => {
-        if (err) return res.status(404).send(err);
-        return res.status(200).send(data);
-    });
-}
-
-
 const getToken = async (req, res) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
@@ -104,11 +94,11 @@ const getShifts = async (req, res) => {
         console.log("gettttshiftssssss");
         if (err) return res.status(400).json({ msg: err });
         if (!data) return res.status(400).json({ msg: 'worker does not exist!' });
-        console.log("data get shifts:",data);
+        console.log("data get shifts:", data);
         const newShifts = [];
         if (data.shifts.length > 0) {
             data.shifts.map(shift => {
-                if (month === shift.startDate.getMonth() + 1) {
+                if (month === shift.startDate.getMonth() + 1 && shift.exitHour) {
                     newShifts.push({
                         _id: shift.id,
                         enteryHour: shift.enteryHour,
@@ -121,7 +111,7 @@ const getShifts = async (req, res) => {
                 }
             })
         }
-        else{
+        else {
             console.log("nooooooo");
             return res.status(400).json({ msg: 'no shifts yet!' });
         }
@@ -135,7 +125,6 @@ module.exports = {
     addNewUser,
     login,
     logout,
-    addNewShift,
     getToken,
-    getShifts,
+    getShifts
 }

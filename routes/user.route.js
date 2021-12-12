@@ -12,9 +12,6 @@ router.post('/addUser', authenticateToken, (req, res) => {
 router.post('/logout', authenticateToken, (req, res) => {
     userController.logout(req, res);
 });
-router.put('/addShift', authenticateToken, (req, res) => {
-    userController.addNewShift(req, res);
-});
 router.get('/token', authenticateToken, (req, res) => {
     userController.getToken(req, res);
 });

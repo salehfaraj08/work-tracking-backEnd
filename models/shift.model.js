@@ -2,9 +2,7 @@ const mongoose = require('mongoose');
 
 const shiftSchema = new mongoose.Schema({
     startDate: {
-        type: Date,
-        default: new Date(),
-        required: true,
+        type: Date
     },
     endDate:{
         type: Date
