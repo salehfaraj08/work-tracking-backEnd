@@ -18,6 +18,31 @@ const calculateShowHour = (hours, minutes) => {
     return hours + ':' + minutes;
 }
 
+const calculateShowDuration = (hours, minutes, seconds) => {
+    if (hours < 10 && hours >= 0) {
+        hours = '0' + hours;
+        console.log('new hours is:', hours);
+    }
+    else {
+        hours = hours + '';
+    }
+    if (minutes < 10 && minutes >= 0) {
+        minutes = '0' + minutes;
+        console.log('new minutes is:', minutes);
+    }
+    else {
+        minutes = minutes + '';
+    }
+    if (seconds < 10 && seconds >= 0) {
+        seconds = '0' + seconds;
+        console.log('new seconds is:', seconds);
+    }
+    else {
+        seconds = seconds + '';
+    }
+    return hours + ':' + minutes + ':' + seconds;
+}
+
 const calculateDurationShift = (now, date) => {
     let diffInMilliSeconds = Math.abs(now - date) / 1000;
     const days = Math.floor(diffInMilliSeconds / 86400);
@@ -32,11 +57,10 @@ const calculateDurationShift = (now, date) => {
     const minutes = Math.floor(diffInMilliSeconds / 60) % 60;
     diffInMilliSeconds -= minutes * 60;
     console.log('minutes', minutes);
-    return { hours, minutes };
-}
 
-function isInt(n) {
-    return n % 1 === 0;
+    const seconds = Math.floor(diffInMilliSeconds % 60);
+    console.log('seconds', seconds);
+    return { hours, minutes, seconds };
 }
 
 const createShift = (res, day, hours, minutes, id) => {
@@ -52,7 +76,7 @@ const createShift = (res, day, hours, minutes, id) => {
         console.log("shifttttt:", shift.enteryHour);
         shift.save((err, shiftData) => {
             if (err) return res.status(404).send(err);
-            workerModel.findByIdAndUpdate(id, { shifts: shiftData._id }, { new: true }, (err, _) => {
+            workerModel.findByIdAndUpdate(id, { $push: { shifts: shiftData._id } }, { new: true }, (err, _) => {
                 if (err) return res.status(404).send(err);
                 return res.status(200).send(shiftData);
             });
@@ -77,7 +101,7 @@ const startNewShift = async (req, res) => {
     console.log('the minutes is:', minutes);
     if (shifts.length > 0) {
         const findShift = shifts.find(shift => {
-            if (shift.startDate.getDate() === day && shift.startDate.getMonth() + 1 === month && shift.startDate.getFullYear() === year && shift.endDate) {
+            if (shift.startDate.getDate() === day && shift.startDate.getMonth() + 1 === month && shift.startDate.getFullYear() === year && !shift.endDate) {
                 return true;
             }
             return false;
@@ -104,11 +128,11 @@ const endShift = async (req, res) => {
         console.log(id);
         const shift = await shiftModel.findOne({ _id: id });
         if (!shift) {
-            return res.status(400).json({ error: 'these shift is not exist' });
+            return res.status(400).json({ msg: 'these shift is not exist' });
         }
     }
     else {
-        return res.status(400).json({ error: 'you havent start the shift today please contact the admin to update the hours' });
+        return res.status(400).json({ msg: 'you havent start the shift today please contact the admin to update the hours' });
     }
     const shift = await shiftModel.findOne({ _id: id });
     console.log(shift.startDate, new Date());
@@ -122,7 +146,7 @@ const endShift = async (req, res) => {
     const day = new Date().getDay() + 1;
     console.log('the day is:', day);
     if (day === 7) {
-        return res.status(400).json({ error: 'today is a day off' });
+        return res.status(400).json({ msg: 'today is a day off' });
     }
     else {
         let dayLength;
@@ -132,15 +156,7 @@ const endShift = async (req, res) => {
         } else if (minutesAndHours.hours >= 9) {
             dayLength = 2;
         }
-        if (minutesAndHours.hours > 0 && minutesAndHours.minutes > 0) {
-            shiftDuration = `${minutesAndHours.hours} hours and ${minutesAndHours.minutes} minutes`;
-        }
-        if (minutesAndHours.hours > 0 && minutesAndHours.minutes === 0) {
-            shiftDuration = `${minutesAndHours.hours} hours`;
-        }
-        if (minutesAndHours.hours === 0 && minutesAndHours.minutes > 0) {
-            shiftDuration = `${minutesAndHours.minutes} minutes`;
-        }
+        const shiftDuration = calculateShowDuration(minutesAndHours.hours, minutesAndHours.minutes, minutesAndHours.seconds)
         shiftModel.findByIdAndUpdate(id, { endDate, dayLength, exitHour, shiftDuration }, { new: true }, (err, data) => {
             if (err) return res.status(404).send(err);
             return res.status(200).send(data);
